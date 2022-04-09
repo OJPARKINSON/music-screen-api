@@ -205,10 +205,10 @@ async def main(loop):
     #         cleanup(loop, session, webhook, display)))
 
     while True:
-                   pil_image = Image.open(sys.path[0] + "/sonos.png")
-            _LOGGER.warning("Image not available, using default")
+        pil_image = Image.open(sys.path[0] + "/sonos.png")
+        _LOGGER.warning("Image not available, using default")
 
-        display.update(pil_image, sonos_data)
+        display.update(pil_image)
         await asyncio.sleep(1)
 
 
