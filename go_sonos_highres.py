@@ -58,55 +58,46 @@ async def get_image_data(session, url):
     return None
 
 
-async def redraw(session, sonos_data, display):
-    """Redraw the screen with current data."""
-    if sonos_data.status == "API error":
-        return
+async def redraw(display, image):
+    # def should_sleep():
+    #     """Determine if screen should be sleeping."""
+    #     if sonos_data.type == "line_in":
+    #         return getattr(sonos_settings, "sleep_on_linein", False)
+    #     if sonos_data.type == "TV":
+    #         return getattr(sonos_settings, "sleep_on_tv", False)
 
-    pil_image = None
+    # if should_sleep():
+    #     if display.is_showing:
+    #         _LOGGER.debug("Input source is %s, sleeping", sonos_data.type)
+    #         display.hide_album()
+    #     return
 
-    def should_sleep():
-        """Determine if screen should be sleeping."""
-        if sonos_data.type == "line_in":
-            return getattr(sonos_settings, "sleep_on_linein", False)
-        if sonos_data.type == "TV":
-            return getattr(sonos_settings, "sleep_on_tv", False)
+    # # see if something is playing
+    # if sonos_data.status == "PLAYING":
+    #     if not sonos_data.is_track_new():
+    #         # Ensure the album frame is displayed in case the current track was paused, seeked, etc
+    #         if not display.is_showing:
+    #             display.show_album()
+    #         return
 
-    if should_sleep():
-        if display.is_showing:
-            _LOGGER.debug("Input source is %s, sleeping", sonos_data.type)
-            display.hide_album()
-        return
+    #     # slim down the trackname
+    #     if sonos_settings.demaster and sonos_data.type not in ["line_in", "TV"]:
+    #         offline = not getattr(
+    #             sonos_settings, "demaster_query_cloud", False)
+    #         sonos_data.trackname = await async_demaster.strip_name(sonos_data.trackname, session, offline)
 
-    # see if something is playing
-    if sonos_data.status == "PLAYING":
-        if not sonos_data.is_track_new():
-            # Ensure the album frame is displayed in case the current track was paused, seeked, etc
-            if not display.is_showing:
-                display.show_album()
-            return
+    #     image_data = await get_image_data(session, sonos_data.image_uri)
+    #     if image_data:
+    #         pil_image = Image.open(BytesIO(image_data))
+    #     elif sonos_data.type == "line_in":
+    #         pil_image = Image.open(sys.path[0] + "/line_in.png")
+    #     elif sonos_data.type == "TV":
+    #         pil_image = Image.open(sys.path[0] + "/tv.png")
 
-        # slim down the trackname
-        if sonos_settings.demaster and sonos_data.type not in ["line_in", "TV"]:
-            offline = not getattr(
-                sonos_settings, "demaster_query_cloud", False)
-            sonos_data.trackname = await async_demaster.strip_name(sonos_data.trackname, session, offline)
+    #     if pil_image is None:
+    #         _LOGGER.warning("Image not available, using default")
 
-        image_data = await get_image_data(session, sonos_data.image_uri)
-        if image_data:
-            pil_image = Image.open(BytesIO(image_data))
-        elif sonos_data.type == "line_in":
-            pil_image = Image.open(sys.path[0] + "/line_in.png")
-        elif sonos_data.type == "TV":
-            pil_image = Image.open(sys.path[0] + "/tv.png")
-
-        if pil_image is None:
-            pil_image = Image.open(sys.path[0] + "/sonos.png")
-            _LOGGER.warning("Image not available, using default")
-
-        display.update(pil_image, sonos_data)
-    else:
-        display.hide_album()
+    display.update(image)
 
 
 def log_git_hash():
@@ -158,6 +149,10 @@ def setup_logging():
             "Cannot write to %s, check permissions and ensure directory exists", log_path)
 
 
+def get_image():
+    return Image.open(sys.path[0] + "/sonos.png")
+
+
 async def main(loop):
     """Main process for script."""
     setup_logging()
@@ -174,41 +169,9 @@ async def main(loop):
         loop.stop()
         return
 
-    # if sonos_settings.room_name_for_highres == "":
-    #     print ("No room name found in sonos_settings.py")
-    #     print ("You can specify a room name manually below")
-    #     print ("Note: manual entry works for testing purposes, but if you want this to run automatically on startup then you should specify a room name in sonos_settings.py")
-    #     print ("You can edit the file with the command: nano sonos_settings.py")
-    #     print ("")
-    #     sonos_room = input ("Enter a Sonos room name for testing purposes>>>  ")
-    # else:
-    #     sonos_room = sonos_settings.room_name_for_highres
-    #     _LOGGER.info("Monitoring room: %s", sonos_room)
-
-    # session = ClientSession()
-    # sonos_data = SonosData(
-    #         sonos_settings.sonos_http_api_address,
-    #         sonos_settings.sonos_http_api_port,
-    #         sonos_room,
-    #         session,
-    # )
-
-    # async def webhook_callback():
-    #     """Callback to trigger after webhook is processed."""
-    #     await redraw(session, sonos_data, display)
-
-    # webhook = SonosWebhook(display, sonos_data, webhook_callback)
-    # await webhook.listen()
-
-    # for signame in ('SIGINT', 'SIGTERM', 'SIGQUIT'):
-    #     loop.add_signal_handler(getattr(signal, signame), lambda: asyncio.ensure_future(
-    #         cleanup(loop, session, webhook, display)))
-
     while True:
-        pil_image = Image.open(sys.path[0] + "/sonos.png")
-        _LOGGER.warning("Image not available, using default")
-
-        display.update(pil_image)
+        image = get_image()
+        await redraw(display, image)
         await asyncio.sleep(1)
 
 
