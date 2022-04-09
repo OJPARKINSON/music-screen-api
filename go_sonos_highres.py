@@ -144,8 +144,6 @@ async def redraw(display, image):
 
 
 def get_access_token():
-    print(sonos_settings.client_id)
-    print(sonos_settings.client_secret)
     auth_header = base64.b64encode(
         six.text_type(sonos_settings.client_id + ":" +
                       sonos_settings.client_secret).encode("ascii")
@@ -163,7 +161,6 @@ def get_access_token():
             'refresh_token': sonos_settings.refresh_token
         }
     )
-    print(response.status_code)
     return response.json()
 
 
@@ -180,7 +177,6 @@ def get_currently_playing_track():
 
 def get_image():
     data = get_currently_playing_track()
-    print(data)
     if data['item']['album']['images']:
         image = data['item']['album']['images'][0]['url']
         response = requests.get(image)
@@ -206,7 +202,7 @@ async def main(loop):
     while True:
         image = get_image()
         await redraw(display, image)
-        await asyncio.sleep(6)
+        await asyncio.sleep(4.5)
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
