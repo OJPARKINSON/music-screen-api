@@ -94,6 +94,8 @@ def get_currently_playing_track():
 
 def get_image():
     data = get_currently_playing_track()
+    print(data.keys())
+    print(data)
     if 'item' in data.keys():
         image = data['item']['album']['images'][0]['url']
         response = requests.get(image)
