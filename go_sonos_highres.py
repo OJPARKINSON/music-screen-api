@@ -151,8 +151,8 @@ def get_access_token():
                       sonos_settings.client_secret).encode("ascii")
     )
     headers = {
-        'Authorization': auth_header,
-        'Content-Type': 'application/x-www-form-urlencoded'
+        "Authorization": "Basic %s" % auth_header.decode("ascii"),
+        "Content-Type": "application/x-www-form-urlencoded",
     }
 
     response = requests.post(
