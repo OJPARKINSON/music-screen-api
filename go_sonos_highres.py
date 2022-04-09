@@ -11,10 +11,7 @@ import six
 import base64
 
 from io import BytesIO
-from aiohttp import ClientError
 from PIL import Image, ImageFile
-
-import async_demaster
 from display_controller import DisplayController, SonosDisplaySetupError
 
 _LOGGER = logging.getLogger(__name__)
@@ -22,13 +19,8 @@ _LOGGER = logging.getLogger(__name__)
 try:
     import sonos_settings
 except ImportError:
-    _LOGGER.error("ERROR: Config file not found. Copy 'sonos_settings.py.example' to 'sonos_settings.py' before you edit. You can do this with the command: cp sonos_settings.py.example sonos_settings.py")
     sys.exit(1)
 
-###############################################################################
-# Global variables and setup
-POLLING_INTERVAL = 1
-WEBHOOK_INTERVAL = 60
 TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token'
 NOW_PLAYING_ENDPOINT = 'https://api.spotify.com/v1/me/player/currently-playing'
 
@@ -54,93 +46,18 @@ def setup_logging():
     if log_path is None:
         return
 
-    log_path_exists = os.path.isfile(log_path)
-    log_dir = os.path.dirname(log_path)
+    _LOGGER.info("Writing to log file: %s", log_path)
+    logfile_handler = logging.FileHandler(log_path, mode="a")
 
-    if (log_path_exists and os.access(log_path, os.W_OK)) or (
-        not log_path_exists and os.access(log_dir, os.W_OK)
-    ):
-        _LOGGER.info("Writing to log file: %s", log_path)
-        logfile_handler = logging.FileHandler(log_path, mode="a")
+    logfile_handler.setLevel(log_level)
+    logfile_handler.setFormatter(logging.Formatter(fmt))
 
-        logfile_handler.setLevel(log_level)
-        logfile_handler.setFormatter(logging.Formatter(fmt))
-
-        logger = logging.getLogger("")
-        logger.addHandler(logfile_handler)
-    else:
-        _LOGGER.error(
-            "Cannot write to %s, check permissions and ensure directory exists", log_path)
-
-# async def get_image_data(session, url):
-#     """Return image data from a URL if available."""
-#     if not url:
-#         return None
-
-#     try:
-#         async with session.get(url) as response:
-#             content_type = response.headers.get('content-type')
-#             if content_type and not content_type.startswith('image/'):
-#                 _LOGGER.warning(
-#                     "Not a valid image type (%s): %s", content_type, url)
-#                 return None
-#             return await response.read()
-#     except ClientError as err:
-#         _LOGGER.warning("Problem connecting to %s [%s]", url, err)
-#     except Exception as err:
-#         _LOGGER.warning("Image failed to load: %s [%s]", url, err)
-#     return None
+    logger = logging.getLogger("")
+    logger.addHandler(logfile_handler)
 
 
-async def redraw(display, image):
-    # def should_sleep():
-    #     """Determine if screen should be sleeping."""
-    #     if sonos_data.type == "line_in":
-    #         return getattr(sonos_settings, "sleep_on_linein", False)
-    #     if sonos_data.type == "TV":
-    #         return getattr(sonos_settings, "sleep_on_tv", False)
-
-    # if should_sleep():
-    #     if display.is_showing:
-    #         _LOGGER.debug("Input source is %s, sleeping", sonos_data.type)
-    #         display.hide_album()
-    #     return
-
-    # # see if something is playing
-    # if sonos_data.status == "PLAYING":
-    #     if not sonos_data.is_track_new():
-    #         # Ensure the album frame is displayed in case the current track was paused, seeked, etc
-    #         if not display.is_showing:
-    #             display.show_album()
-    #         return
-
-    #     # slim down the trackname
-    #     if sonos_settings.demaster and sonos_data.type not in ["line_in", "TV"]:
-    #         offline = not getattr(
-    #             sonos_settings, "demaster_query_cloud", False)
-    #         sonos_data.trackname = await async_demaster.strip_name(sonos_data.trackname, session, offline)
-
-    #     image_data = await get_image_data(session, sonos_data.image_uri)
-    #     if image_data:
-    #         pil_image = Image.open(BytesIO(image_data))
-    #     elif sonos_data.type == "line_in":
-    #         pil_image = Image.open(sys.path[0] + "/line_in.png")
-    #     elif sonos_data.type == "TV":
-    #         pil_image = Image.open(sys.path[0] + "/tv.png")
-
-    #     if pil_image is None:
-    #         _LOGGER.warning("Image not available, using default")
+def redraw(display, image):
     display.update(image)
-
-# export const getNowPlaying = async () => {
-#   const { access_token } = await getAccessToken();
-
-#   return fetch(NOW_PLAYING_ENDPOINT, {
-#     headers: {
-#       Authorization: `Bearer ${access_token}`,
-#     },
-#   });
-# };
 
 
 def get_access_token():
@@ -177,12 +94,12 @@ def get_currently_playing_track():
 
 def get_image():
     data = get_currently_playing_track()
-    if data['item']['album']['images']:
+    if 'item' in data.keys():
         image = data['item']['album']['images'][0]['url']
         response = requests.get(image)
+        return Image.open(BytesIO(response.content))
     else:
-        image = None
-    return Image.open(BytesIO(response.content))
+        return Image.open(sys.path[0] + "/sonos.png")
 
 
 async def main(loop):
@@ -201,8 +118,13 @@ async def main(loop):
 
     while True:
         image = get_image()
-        await redraw(display, image)
-        await asyncio.sleep(4.5)
+        if image:
+            redraw(display, image)
+            await asyncio.sleep(4.5)
+        else:
+            print("nowt playing")
+            await asyncio.sleep(600)
+
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
