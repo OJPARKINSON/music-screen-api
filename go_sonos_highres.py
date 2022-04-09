@@ -96,16 +96,16 @@ def get_image():
     data = get_currently_playing_track()
     print(data.keys())
     print(data)
-    if data['is_playing'] is False:
-        return Image.open(sys.path[0] + "/sonos.png")
-    else:
+    if data['is_playing'] is True:
         if data['currently_playing_type'] == 'episode':
             return Image.open(sys.path[0] + "/tv.png")
-        else:
-            image = getattr(getattr(getattr(getattr(getattr(
-                data, "item", None), "album", None), "images", None), 0, None), "url", None)
+        elif data['currently_playing_type'] == 'track':
+            image = getattr(getattr(getattr(data, "item", None),
+                            "album", None), "images", None)[0]['url']
             response = requests.get(image)
             return Image.open(BytesIO(response.content))
+    else:
+        return Image.open(sys.path[0] + "/sonos.png")
 
 
 async def main(loop):
