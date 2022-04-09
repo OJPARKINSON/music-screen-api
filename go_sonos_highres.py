@@ -148,7 +148,7 @@ def setup_logging():
 
 def get_image():
     response = requests.get(
-        'https://i.scdn.co/image/ab67616d0000b2733ba1f72fb3bf152db4547435')
+        'https://i.scdn.co/image/ab67616d0000b27316eb1e685e6bd37ab3228de6')
     return Image.open(BytesIO(response.content))
 
 
