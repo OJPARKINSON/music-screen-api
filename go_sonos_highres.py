@@ -100,8 +100,7 @@ def get_image():
         if data['currently_playing_type'] == 'episode':
             return Image.open(sys.path[0] + "/tv.png")
         elif data['currently_playing_type'] == 'track':
-            image = getattr(getattr(getattr(data, "item", None),
-                            "album", None), "images", None)[0]['url']
+            image = data['items']['album']['images'][0]['url']
             response = requests.get(image)
             return Image.open(BytesIO(response.content))
     else:
