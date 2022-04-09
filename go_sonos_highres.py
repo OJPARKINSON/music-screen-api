@@ -5,19 +5,15 @@ it integrates with your local Sonos sytem to display what is currently playing
 import asyncio
 import logging
 import os
-import signal
 import subprocess
 import sys
 import time
-from io import BytesIO
 
-from aiohttp import ClientError, ClientSession
+from aiohttp import ClientError
 from PIL import Image, ImageFile
 
 import async_demaster
 from display_controller import DisplayController, SonosDisplaySetupError
-from sonos_user_data import SonosData
-from webhook_handler import SonosWebhook
 
 _LOGGER = logging.getLogger(__name__)
 
