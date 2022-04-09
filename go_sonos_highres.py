@@ -7,6 +7,7 @@ import logging
 import os
 import subprocess
 import sys
+import requests
 import time
 
 from aiohttp import ClientError
@@ -34,24 +35,24 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 # Functions
 
 
-async def get_image_data(session, url):
-    """Return image data from a URL if available."""
-    if not url:
-        return None
+# async def get_image_data(session, url):
+#     """Return image data from a URL if available."""
+#     if not url:
+#         return None
 
-    try:
-        async with session.get(url) as response:
-            content_type = response.headers.get('content-type')
-            if content_type and not content_type.startswith('image/'):
-                _LOGGER.warning(
-                    "Not a valid image type (%s): %s", content_type, url)
-                return None
-            return await response.read()
-    except ClientError as err:
-        _LOGGER.warning("Problem connecting to %s [%s]", url, err)
-    except Exception as err:
-        _LOGGER.warning("Image failed to load: %s [%s]", url, err)
-    return None
+#     try:
+#         async with session.get(url) as response:
+#             content_type = response.headers.get('content-type')
+#             if content_type and not content_type.startswith('image/'):
+#                 _LOGGER.warning(
+#                     "Not a valid image type (%s): %s", content_type, url)
+#                 return None
+#             return await response.read()
+#     except ClientError as err:
+#         _LOGGER.warning("Problem connecting to %s [%s]", url, err)
+#     except Exception as err:
+#         _LOGGER.warning("Image failed to load: %s [%s]", url, err)
+#     return None
 
 
 async def redraw(display, image):
@@ -92,7 +93,6 @@ async def redraw(display, image):
 
     #     if pil_image is None:
     #         _LOGGER.warning("Image not available, using default")
-
     display.update(image)
 
 
@@ -146,7 +146,9 @@ def setup_logging():
 
 
 def get_image():
-    return Image.open(sys.path[0] + "/sonos.png")
+    response = requests.get(
+        'https://i.scdn.co/image/ab67616d0000b2733ba1f72fb3bf152db4547435')
+    return Image.open(BytesIO(response.content))
 
 
 async def main(loop):
@@ -168,7 +170,7 @@ async def main(loop):
     while True:
         image = get_image()
         await redraw(display, image)
-        await asyncio.sleep(1)
+        await asyncio.sleep(2)
 
 
 async def cleanup(loop, session, webhook, display):
