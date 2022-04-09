@@ -162,11 +162,12 @@ def get_access_token():
         }
     )
     print(response.status_code)
-    return response.json()['access_token']
+    return response.json()
 
 
 def get_currently_playing_track():
     access_token = get_access_token()
+    print(access_token)
     headers = {
         'Authorization': 'Bearer ' + access_token['access_token'],
         'Content-Type': 'application/json'
