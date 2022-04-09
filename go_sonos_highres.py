@@ -5,10 +5,10 @@ it integrates with your local Sonos sytem to display what is currently playing
 import asyncio
 import logging
 import os
-import subprocess
 import sys
 import requests
-import time
+import six
+import base64
 
 from io import BytesIO
 from aiohttp import ClientError
@@ -29,12 +29,48 @@ except ImportError:
 # Global variables and setup
 POLLING_INTERVAL = 1
 WEBHOOK_INTERVAL = 60
+TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token'
+NOW_PLAYING_ENDPOINT = 'https://api.spotify.com/v1/me/player/currently-playing'
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-###############################################################################
-# Functions
 
+def setup_logging():
+    """Set up logging facilities for the script."""
+    log_level = getattr(sonos_settings, "log_level", logging.INFO)
+    log_file = getattr(sonos_settings, "log_file", None)
+    if log_file:
+        log_path = os.path.expanduser(log_file)
+    else:
+        log_path = None
+
+    fmt = "%(asctime)s %(levelname)7s - %(message)s"
+    logging.basicConfig(format=fmt, level=log_level)
+
+    # Suppress overly verbose logs from libraries that aren't helpful
+    logging.getLogger("aiohttp.access").setLevel(logging.WARNING)
+    logging.getLogger("PIL.PngImagePlugin").setLevel(logging.WARNING)
+
+    if log_path is None:
+        return
+
+    log_path_exists = os.path.isfile(log_path)
+    log_dir = os.path.dirname(log_path)
+
+    if (log_path_exists and os.access(log_path, os.W_OK)) or (
+        not log_path_exists and os.access(log_dir, os.W_OK)
+    ):
+        _LOGGER.info("Writing to log file: %s", log_path)
+        logfile_handler = logging.FileHandler(log_path, mode="a")
+
+        logfile_handler.setLevel(log_level)
+        logfile_handler.setFormatter(logging.Formatter(fmt))
+
+        logger = logging.getLogger("")
+        logger.addHandler(logfile_handler)
+    else:
+        _LOGGER.error(
+            "Cannot write to %s, check permissions and ensure directory exists", log_path)
 
 # async def get_image_data(session, url):
 #     """Return image data from a URL if available."""
@@ -96,66 +132,62 @@ async def redraw(display, image):
     #         _LOGGER.warning("Image not available, using default")
     display.update(image)
 
+# export const getNowPlaying = async () => {
+#   const { access_token } = await getAccessToken();
 
-def log_git_hash():
-    """Log the current git hash for troubleshooting purposes."""
-    try:
-        git_hash = subprocess.check_output(
-            ["git", "describe"], cwd=sys.path[0], text=True).strip()
-    except (OSError, subprocess.CalledProcessError) as err:
-        _LOGGER.debug("Error getting current version: %s", err)
-    else:
-        _LOGGER.info("Current script version: %s", git_hash)
+#   return fetch(NOW_PLAYING_ENDPOINT, {
+#     headers: {
+#       Authorization: `Bearer ${access_token}`,
+#     },
+#   });
+# };
 
 
-def setup_logging():
-    """Set up logging facilities for the script."""
-    log_level = getattr(sonos_settings, "log_level", logging.INFO)
-    log_file = getattr(sonos_settings, "log_file", None)
-    if log_file:
-        log_path = os.path.expanduser(log_file)
-    else:
-        log_path = None
+def get_access_token():
+    auth_header = base64.b64encode(
+        six.text_type(sonos_settings.client_id + ":" +
+                      sonos_settings.client_secret).encode("ascii")
+    )
+    headers = {
+        'Authorization': auth_header,
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
 
-    fmt = "%(asctime)s %(levelname)7s - %(message)s"
-    logging.basicConfig(format=fmt, level=log_level)
+    response = requests.post(
+        TOKEN_ENDPOINT,
+        headers=headers,
+        data={
+            'grant_type': 'refresh_token',
+            'refresh_token': sonos_settings.refresh_token
+        }
+    )
+    print(response.status_code)
+    return response.json()['access_token']
 
-    # Suppress overly verbose logs from libraries that aren't helpful
-    logging.getLogger("aiohttp.access").setLevel(logging.WARNING)
-    logging.getLogger("PIL.PngImagePlugin").setLevel(logging.WARNING)
 
-    if log_path is None:
-        return
-
-    log_path_exists = os.path.isfile(log_path)
-    log_dir = os.path.dirname(log_path)
-
-    if (log_path_exists and os.access(log_path, os.W_OK)) or (
-        not log_path_exists and os.access(log_dir, os.W_OK)
-    ):
-        _LOGGER.info("Writing to log file: %s", log_path)
-        logfile_handler = logging.FileHandler(log_path, mode="a")
-
-        logfile_handler.setLevel(log_level)
-        logfile_handler.setFormatter(logging.Formatter(fmt))
-
-        logger = logging.getLogger("")
-        logger.addHandler(logfile_handler)
-    else:
-        _LOGGER.error(
-            "Cannot write to %s, check permissions and ensure directory exists", log_path)
+def get_currently_playing_track():
+    access_token = get_access_token()
+    headers = {
+        'Authorization': 'Bearer ' + access_token['access_token'],
+        'Content-Type': 'application/json'
+    }
+    response = requests.get(NOW_PLAYING_ENDPOINT, headers=headers)
+    return response.json()
 
 
 def get_image():
-    response = requests.get(
-        'https://i.scdn.co/image/ab67616d0000b27316eb1e685e6bd37ab3228de6')
+    data = get_currently_playing_track()
+    print(data)
+    if data['item']['album']['images']:
+        image = data['item']['album']['images'][0]['url']
+        response = requests.get(image)
+    else:
+        image = None
     return Image.open(BytesIO(response.content))
 
 
 async def main(loop):
-    """Main process for script."""
     setup_logging()
-    log_git_hash()
     show_details_timeout = getattr(
         sonos_settings, "show_details_timeout", None)
     overlay_text = getattr(sonos_settings, "overlay_text", None)
@@ -172,19 +204,6 @@ async def main(loop):
         image = get_image()
         await redraw(display, image)
         await asyncio.sleep(2)
-
-
-async def cleanup(loop, session, webhook, display):
-    """Cleanup tasks on shutdown."""
-    _LOGGER.debug("Shutting down")
-    display.cleanup()
-    await session.close()
-    await webhook.stop()
-
-    tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-    [task.cancel() for task in tasks]
-    await asyncio.gather(*tasks, return_exceptions=True)
-    loop.stop()
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
