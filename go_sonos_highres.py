@@ -10,6 +10,7 @@ import sys
 import requests
 import time
 
+from io import BytesIO
 from aiohttp import ClientError
 from PIL import Image, ImageFile
 
