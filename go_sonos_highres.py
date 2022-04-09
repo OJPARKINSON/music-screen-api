@@ -94,8 +94,7 @@ def get_currently_playing_track():
 
 def get_image():
     data = get_currently_playing_track()
-    print(data.keys())
-    print(data)
+
     if data['is_playing'] is True:
         if data['currently_playing_type'] == 'episode':
             return Image.open(sys.path[0] + "/tv.png")
@@ -125,7 +124,7 @@ async def main(loop):
         image = get_image()
         if image:
             redraw(display, image)
-            await asyncio.sleep(4.5)
+            await asyncio.sleep(4)
         else:
             print("nowt playing")
             await asyncio.sleep(600)
