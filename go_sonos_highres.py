@@ -168,10 +168,10 @@ def get_access_token():
 
 
 def get_currently_playing_track():
-    access_token = get_access_token()
-    print(access_token)
+    auth_response = get_access_token()
+    access_token = auth_response["access_token"]
     headers = {
-        'Authorization': 'Bearer ' + access_token['access_token'],
+        'Authorization': 'Bearer ' + access_token,
         'Content-Type': 'application/json'
     }
     response = requests.get(NOW_PLAYING_ENDPOINT, headers=headers)
@@ -206,7 +206,7 @@ async def main(loop):
     while True:
         image = get_image()
         await redraw(display, image)
-        await asyncio.sleep(2)
+        await asyncio.sleep(6)
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
