@@ -144,6 +144,8 @@ async def redraw(display, image):
 
 
 def get_access_token():
+    print(sonos_settings.client_id)
+    print(sonos_settings.client_secret)
     auth_header = base64.b64encode(
         six.text_type(sonos_settings.client_id + ":" +
                       sonos_settings.client_secret).encode("ascii")
