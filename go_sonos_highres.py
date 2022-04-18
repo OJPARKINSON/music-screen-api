@@ -9,6 +9,8 @@ import sys
 import requests
 import six
 import base64
+import json
+import random
 
 from io import BytesIO
 from PIL import Image, ImageFile
@@ -25,6 +27,11 @@ TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token'
 NOW_PLAYING_ENDPOINT = 'https://api.spotify.com/v1/me/player/currently-playing'
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+jsonFile = open("tweets.json", "r")
+tweetsJSON = jsonFile.read()
+json_dict = json.loads(tweetsJSON)
+jsonFile.close()
 
 
 def setup_logging():
@@ -92,6 +99,13 @@ def get_currently_playing_track():
     return response.json()
 
 
+def get_tweet_image():
+    random_index = random.randrange(0, len(json_dict['tweets']) - 1)
+    tweet = json_dict['tweets'][random_index]['url']
+    response = requests.get(tweet)
+    return Image.open(BytesIO(response.content))
+
+
 def get_image():
     data = get_currently_playing_track()
 
@@ -124,13 +138,14 @@ async def main(loop):
         return
 
     while True:
-        image = get_image()
-        if image:
+        # image = get_image()
+        if False:
             redraw(display, image)
             await asyncio.sleep(4)
         else:
-            print("nowt playing")
-            await asyncio.sleep(60)
+            tweetImage = get_tweet_image()
+            redraw(display, tweetImage)
+            await asyncio.sleep(10)
 
 
 if __name__ == '__main__':
