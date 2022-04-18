@@ -113,9 +113,12 @@ async def main(loop):
     overlay_text = getattr(sonos_settings, "overlay_text", None)
     show_play_state = getattr(sonos_settings, "show_play_state", None)
 
+    show_details = sonos_settings.show_details
+    show_artist_and_album = sonos_settings.show_artist_and_album
+
     try:
-        display = DisplayController(loop, sonos_settings.show_details,
-                                    sonos_settings.show_artist_and_album, show_details_timeout, overlay_text, show_play_state)
+        display = DisplayController(
+            loop, show_details, show_artist_and_album, show_details_timeout, overlay_text, show_play_state)
     except SonosDisplaySetupError:
         loop.stop()
         return
@@ -127,7 +130,7 @@ async def main(loop):
             await asyncio.sleep(4)
         else:
             print("nowt playing")
-            await asyncio.sleep(600)
+            await asyncio.sleep(60)
 
 
 if __name__ == '__main__':
