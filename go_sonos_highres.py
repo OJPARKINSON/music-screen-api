@@ -117,7 +117,7 @@ def get_image():
             response = requests.get(image)
             return Image.open(BytesIO(response.content))
     else:
-        return Image.open(sys.path[0] + "/sonos.png")
+        return None
 
 
 async def main(loop):
@@ -138,14 +138,14 @@ async def main(loop):
         return
 
     while True:
-        # image = get_image()
-        if False:
+        image = get_image()
+        if image:
             redraw(display, image)
             await asyncio.sleep(4)
         else:
             tweetImage = get_tweet_image()
             redraw(display, tweetImage)
-            await asyncio.sleep(10)
+            await asyncio.sleep(60)
 
 
 if __name__ == '__main__':
