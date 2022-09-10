@@ -84,7 +84,7 @@ async def main(loop):
     utils.setup_logging()
 
     try:
-        display = DisplayController(loop)
+        display = DisplayController(loop, False, False, False, False, False)
     except SonosDisplaySetupError:
         loop.stop()
         return
