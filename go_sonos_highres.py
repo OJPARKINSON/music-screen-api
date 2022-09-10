@@ -95,14 +95,14 @@ async def main(loop):
     utils.setup_logging()
 
     try:
-        display = DisplayController(loop, False, False, False, False, False)
+        display = DisplayController(loop, False, False, False, True, False)
     except SonosDisplaySetupError:
         loop.stop()
         return
 
     while True:
         image = get_image()
-        if True:
+        if False:
             display.update(image)
             await asyncio.sleep(4)
         else:
