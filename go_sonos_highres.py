@@ -3,64 +3,20 @@ This file is for use with the Pimoroni HyperPixel 4.0 Square (Non Touch) High Re
 it integrates with your local Sonos sytem to display what is currently playing
 """
 import asyncio
-import logging
-import os
 import sys
-import requests
-import six
-import base64
-import json
-import random
 
-from io import BytesIO
-from PIL import Image, ImageFile
+from PIL import ImageFile
 from display_controller import DisplayController, SonosDisplaySetupError
 
-_LOGGER = logging.getLogger(__name__)
 
 try:
-    import sonos_settings
+    import utils
+    from spotify import get_album
+    from twitter import get_tweet_image
 except ImportError:
     sys.exit(1)
 
-TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token'
-NOW_PLAYING_ENDPOINT = 'https://api.spotify.com/v1/me/player/currently-playing'
-
 ImageFile.LOAD_TRUNCATED_IMAGES = True
-
-jsonFile = open("tweets.json", "r")
-tweetsJSON = jsonFile.read()
-json_dict = json.loads(tweetsJSON)
-jsonFile.close()
-
-
-def setup_logging():
-    """Set up logging facilities for the script."""
-    log_level = getattr(sonos_settings, "log_level", logging.INFO)
-    log_file = getattr(sonos_settings, "log_file", None)
-    if log_file:
-        log_path = os.path.expanduser(log_file)
-    else:
-        log_path = None
-
-    fmt = "%(asctime)s %(levelname)7s - %(message)s"
-    logging.basicConfig(format=fmt, level=log_level)
-
-    # Suppress overly verbose logs from libraries that aren't helpful
-    logging.getLogger("aiohttp.access").setLevel(logging.WARNING)
-    logging.getLogger("PIL.PngImagePlugin").setLevel(logging.WARNING)
-
-    if log_path is None:
-        return
-
-    _LOGGER.info("Writing to log file: %s", log_path)
-    logfile_handler = logging.FileHandler(log_path, mode="a")
-
-    logfile_handler.setLevel(log_level)
-    logfile_handler.setFormatter(logging.Formatter(fmt))
-
-    logger = logging.getLogger("")
-    logger.addHandler(logfile_handler)
 
 
 def redraw(display, image):
@@ -125,18 +81,10 @@ def get_image():
 
 
 async def main(loop):
-    setup_logging()
-    show_details_timeout = getattr(
-        sonos_settings, "show_details_timeout", None)
-    overlay_text = getattr(sonos_settings, "overlay_text", None)
-    show_play_state = getattr(sonos_settings, "show_play_state", None)
-
-    show_details = sonos_settings.show_details
-    show_artist_and_album = sonos_settings.show_artist_and_album
+    utils.setup_logging()
 
     try:
-        display = DisplayController(
-            loop, show_details, show_artist_and_album, show_details_timeout, overlay_text, show_play_state)
+        display = DisplayController(loop)
     except SonosDisplaySetupError:
         loop.stop()
         return
