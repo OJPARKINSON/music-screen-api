@@ -67,12 +67,12 @@ def get_tweet_image(tweetIndex):
     random_index = random.randrange(0, len(json_dict['tweets']) - 1)
     tweet = json_dict['tweets'][tweetIndex]['url']
     print(tweet)
+    print(tweetIndex == len(json_dict['tweets']))
+    print(len(json_dict['tweets']))
     response = requests.get(tweet)
-    print(response.content) 
+    tweetIndex =+ 1
     if tweetIndex == len(json_dict['tweets']): 
     	tweetIndex = 0
-    else:
-	    tweetIndex =+ 1
     print('bonk')
     return Image.open(BytesIO(response.content))
 
