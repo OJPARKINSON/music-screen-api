@@ -14,7 +14,6 @@ tweetsJSON = jsonFile.read()
 json_dict = json.loads(tweetsJSON)
 jsonFile.close()
 
-
 def parse_tweets(responseJSON):
     for tweet in responseJSON['data']:
         if tweet["author_id"] == sonos_settings.AUTHOR_ID:
@@ -53,7 +52,7 @@ def get_tweets(pagination_token):
 while True:
     response, status = get_tweets(pagination_token)
     if status != 200:
-        print("Error: " + str(status))
+        print("Error: " + str(status) + str(response))
         break
 
     pagination_token = parse_tweets(response)

@@ -55,7 +55,7 @@ def get_currently_playing_track():
     return response.json()
 
 tweetIndex = 0
-def get_tweet_image():
+def get_tweet_image(tweetIndex):
     random_index = random.randrange(0, len(json_dict['tweets']) - 1)
     tweet = json_dict['tweets'][tweetIndex]['url']
     response = requests.get(tweet) 
@@ -95,7 +95,7 @@ async def main(loop):
             redraw(display, image)
             await asyncio.sleep(4)
         else:
-            tweetImage = get_tweet_image()
+            tweetImage = get_tweet_image(tweetIndex)
             redraw(display, tweetImage)
             await asyncio.sleep(5)
 

@@ -53,3 +53,10 @@ sleep_on_linein = False
 
 # Set to True if running on a Pi Zero along with `node-sonos-http-api` to mitigate long startup times and other performance limitations.
 pi_zero = False
+
+client_id =
+client_secret =
+refresh_token =
+TWITTER_API_KEY =
+TWITTER_ID =
+AUTHOR_ID =
