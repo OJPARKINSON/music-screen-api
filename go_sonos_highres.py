@@ -5,8 +5,13 @@ it integrates with your local Sonos sytem to display what is currently playing
 import asyncio
 import sys
 import base64
+import six
+import requests
+import random
+import json
 
-from PIL import ImageFile
+from PIL import ImageFile, Image
+from io import BytesIO
 from display_controller import DisplayController, SonosDisplaySetupError
 
 
@@ -14,11 +19,17 @@ try:
     import utils
     from spotify import get_album
     from twitter import get_tweet_image
+    import sonos_settings
 except ImportError:
     sys.exit(1)
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token'
+NOW_PLAYING_ENDPOINT = 'https://api.spotify.com/v1/me/player/currently-playing'
 
+jsonFile = open("tweets.json", "r")
+tweetsJSON = jsonFile.read()
+json_dict = json.loads(tweetsJSON)
 
 def redraw(display, image):
     display.update(image)
@@ -59,11 +70,14 @@ tweetIndex = 0
 def get_tweet_image(tweetIndex):
     random_index = random.randrange(0, len(json_dict['tweets']) - 1)
     tweet = json_dict['tweets'][tweetIndex]['url']
-    response = requests.get(tweet) 
+    print(tweet)
+    response = requests.get(tweet)
+    print(response.content) 
     if tweetIndex == len(json_dict['tweets']): 
     	tweetIndex = 0
     else:
 	    tweetIndex =+ 1
+    print('bonk')
     return Image.open(BytesIO(response.content))
 
 
@@ -92,7 +106,7 @@ async def main(loop):
 
     while True:
         image = get_image()
-        if False:
+        if True:
             redraw(display, image)
             await asyncio.sleep(4)
         else:
