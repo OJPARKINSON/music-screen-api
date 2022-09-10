@@ -31,10 +31,6 @@ jsonFile = open("tweets.json", "r")
 tweetsJSON = jsonFile.read()
 json_dict = json.loads(tweetsJSON)
 
-def redraw(display, image):
-    display.update(image)
-
-
 def get_access_token():
     auth_header = base64.b64encode(
         six.text_type(sonos_settings.client_id + ":" +
@@ -107,11 +103,11 @@ async def main(loop):
     while True:
         image = get_image()
         if True:
-            redraw(display, image)
+            display.update(image)
             await asyncio.sleep(4)
         else:
             tweetImage = get_tweet_image(tweetIndex)
-            redraw(display, tweetImage)
+            display.update(tweetImage)
             await asyncio.sleep(5)
 
 

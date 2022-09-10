@@ -188,7 +188,7 @@ class DisplayController:  # pylint: disable=too-many-instance-attributes
         play_state_text = ""
 
         # Store the images as attributes to preserve scope for Tk
-        self.album_image = resize_image(image, self.SCREEN_W)
+        self.album_image = resize_image(image, 720)
         if self.overlay_text:
             self.thumb_image = resize_image(image, self.SCREEN_W)
             self.label_albumart_detail.place(
