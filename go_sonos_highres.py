@@ -4,6 +4,7 @@ it integrates with your local Sonos sytem to display what is currently playing
 """
 import asyncio
 import sys
+import base64
 
 from PIL import ImageFile
 from display_controller import DisplayController, SonosDisplaySetupError
