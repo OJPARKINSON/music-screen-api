@@ -67,12 +67,7 @@ def get_tweet_image(tweetIndex):
     tweet = json_dict['tweets'][tweetIndex]['url']
     print(tweet)
     print(tweetIndex)
-    print(len(json_dict['tweets']))
     response = requests.get(tweet)
-    tweetIndex+=1
-    if tweetIndex == len(json_dict['tweets']): 
-    	tweetIndex = 0
-    print(tweetIndex)
     return Image.open(BytesIO(response.content))
 
 
@@ -108,6 +103,9 @@ async def main(loop):
         else:
             tweetImage = get_tweet_image(tweetIndex)
             display.update(tweetImage)
+                tweetIndex+=1
+            if tweetIndex == len(json_dict['tweets']): 
+    	        tweetIndex = 0
             await asyncio.sleep(5)
 
 
