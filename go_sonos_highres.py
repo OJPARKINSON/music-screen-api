@@ -108,6 +108,7 @@ async def main(loop):
     	        tweetIndex = 0
             await asyncio.sleep(5)
 
+# made a loop to review all the images, I need to add some code to look at the aspect ratio and this code needs cleaning up
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
