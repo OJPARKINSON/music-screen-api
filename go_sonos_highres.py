@@ -103,7 +103,7 @@ async def main(loop):
         else:
             tweetImage = get_tweet_image(tweetIndex)
             display.update(tweetImage)
-                tweetIndex+=1
+            tweetIndex+=1
             if tweetIndex == len(json_dict['tweets']): 
     	        tweetIndex = 0
             await asyncio.sleep(5)
