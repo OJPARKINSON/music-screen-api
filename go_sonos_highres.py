@@ -99,9 +99,9 @@ async def main(loop):
         loop.stop()
         return
 
+    tweetIndex = 0
     while True:
         image = get_image()
-        tweetIndex = 0
         if False:
             display.update(image)
             await asyncio.sleep(4)
