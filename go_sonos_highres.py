@@ -71,10 +71,10 @@ def get_tweet_image(tweetIndex):
     print(len(json_dict['tweets']))
     response = requests.get(tweet)
     tweetIndex+=1
-     print(tweetIndex)
+    print(tweetIndex)
     if tweetIndex == len(json_dict['tweets']): 
     	tweetIndex = 0
-         print(tweetIndex)
+        print(tweetIndex)
     return Image.open(BytesIO(response.content))
 
 
