@@ -63,14 +63,14 @@ def get_currently_playing_track():
     return response.json()
 
 tweetIndex = 0
-def get_tweet_image():
+def get_tweet_image(tweetIndex):
     random_index = random.randrange(0, len(json_dict['tweets']) - 1)
     tweet = json_dict['tweets'][tweetIndex]['url']
     print(tweet)
     print(tweetIndex)
     print(len(json_dict['tweets']))
     response = requests.get(tweet)
-    tweetIndex = tweetIndex + 1
+    tweetIndex+=1
     if tweetIndex == len(json_dict['tweets']): 
     	tweetIndex = 0
     return Image.open(BytesIO(response.content))
@@ -105,7 +105,7 @@ async def main(loop):
             display.update(image)
             await asyncio.sleep(4)
         else:
-            tweetImage = get_tweet_image()
+            tweetImage = get_tweet_image(tweetIndex)
             display.update(tweetImage)
             await asyncio.sleep(5)
 
