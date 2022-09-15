@@ -60,6 +60,7 @@ def get_currently_playing_track():
         'Content-Type': 'application/json'
     }
     response = requests.get(NOW_PLAYING_ENDPOINT, headers=headers)
+    print(response)
     return response.json()
 
 def get_tweet_image(tweetIndex):
@@ -73,14 +74,10 @@ def get_tweet_image(tweetIndex):
 
 def get_image():
     data = get_currently_playing_track()
-
-    if data['is_playing'] is True:
-        if data['currently_playing_type'] == 'episode':
-            return Image.open(sys.path[0] + "/tv.png")
-        elif data['currently_playing_type'] == 'track':
-            image = data['item']['album']['images'][0]['url']
-            response = requests.get(image)
-            return Image.open(BytesIO(response.content))
+    if data['is_playing'] == True and data['currently_playing_type'] == 'track':
+        image = data['item']['album']['images'][0]['url']
+        response = requests.get(image)
+        return Image.open(BytesIO(response.content))
     else:
         return None
 
@@ -97,7 +94,7 @@ async def main(loop):
     tweetIndex = 0
     while True:
         image = get_image()
-        if False:
+        if image:
             display.update(image)
             await asyncio.sleep(4)
         else:
@@ -105,7 +102,7 @@ async def main(loop):
             display.update(tweetImage)
             tweetIndex+=1
             if tweetIndex == len(json_dict['tweets']): 
-    	        tweetIndex = 0
+                tweetIndex = 0
             await asyncio.sleep(5)
 
 # made a loop to review all the images, I need to add some code to look at the aspect ratio and this code needs cleaning up
